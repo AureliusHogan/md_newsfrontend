@@ -60,7 +60,7 @@ class CheckFileUpload extends \TYPO3\CMS\Extbase\Validation\Validator\AbstractVa
      */
     private function checkDenyPattern($uploadFile)
     {
-        if (!GeneralUtility::verifyFilenameAgainstDenyPattern($uploadFile['name'])) {
+        if (!GeneralUtility::makeInstance(FileNameValidator::class)->isValid($uploadFile['name'])) {
             $this->addError(LocalizationUtility::translate('validator.file_type','md_newsfrontend'), 1540902993);
         }
 

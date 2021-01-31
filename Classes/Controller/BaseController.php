@@ -12,6 +12,7 @@ namespace Mediadreams\MdNewsfrontend\Controller;
  *
  */
 
+use Mediadreams\MdNewsfrontend\Property\TypeConverters\MyPersistenObjectConverter;
 use TYPO3\CMS\Core\Cache\CacheManager;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\TypoScript\TypoScriptService;
@@ -111,7 +112,7 @@ class BaseController extends \TYPO3\CMS\Extbase\Mvc\Controller\ActionController
             $stdWrapProperties = GeneralUtility::trimExplode(',', $this->settings['useStdWrap'], true);
             foreach ($stdWrapProperties as $key) {
                 if (is_array($typoScriptArray[$key . '.'])) {
-                    $this->settings[$key] = $this->configurationManager->getContentObject()->stdWrap(
+                    $this->settings[$key] = $this->configurationManager->getContentObjectRenderer()->stdWrap(
                         $typoScriptArray[$key],
                         $typoScriptArray[$key . '.']
                     );

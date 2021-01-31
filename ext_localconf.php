@@ -10,7 +10,7 @@ call_user_func(
          */
         $GLOBALS['TYPO3_CONF_VARS']['EXT']['news']['classes']['Domain/Model/News'][] = 'md_newsfrontend';
 
-        
+
         \TYPO3\CMS\Extbase\Utility\ExtensionUtility::configurePlugin(
             'Mediadreams.MdNewsfrontend',
             'Newsfe',
@@ -22,6 +22,9 @@ call_user_func(
                 'News' => 'list, create, update, delete'
             ]
         );
-        
+
+//        \TYPO3\CMS\Extbase\Utility\ExtensionUtility::registerTypeConverter('Mediadreams\\Mdnewsfrontend\\Property\\TypeConverters\\MyPersistentObjectConverter');
+
+
     }
 );
