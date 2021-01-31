@@ -132,31 +132,9 @@ class NewsController extends BaseController
      */
     public function initializeEditAction()
     {
-//        $this->arguments->getArgument('news')
-//            ->getPropertyMappingConfiguration()
-//            ->setTypeConverterOptions('\\Mediadreams\\Mdnewsfrontend\\Property\\TypeConverters\\MyPersistentObjectConverterXX',[
-//                'IGNORE_ENABLE_FIELDS',
-//                'RESPECT_STORAGE_PAGE',
-//                'RESPECT_SYS_LANGUAGE'
-//            ]);
-
         $this->arguments->getArgument('news')
             ->getPropertyMappingConfiguration()
             ->setTypeConverter($this->objectManager->get(MyPersistentObjectConverter::class));
-
-//        $myConverter = new MyPersistentObjectConverter();
-//        $myConverter = $this->objectManager->get(MyPersistentObjectConverter::class);
-//        $myConverter = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(MyPersistentObjectConverter::class);
-//        $this->arguments->getArgument('news')
-//            ->getPropertyMappingConfiguration()
-//            ->setTypeConverter($myConverter);
-
-//        $this->arguments->getArgument('news')
-//            ->getPropertyMappingConfiguration()
-//            ->setTypeConverter( 'MyPersistentObjectConverter::class');
-//
-//        http://dev.b2i.develop.avibus/my-messages?tx_mdnewsfrontend_newsfe%5Baction%5D=eobjectManagerdit&tx_mdnewsfrontend_newsfe%5Bcontroller%5D=News&tx_mdnewsfrontend_newsfe%5Bnews%5D=21&cHash=7aae048c6262e002f668fa617c21e20a
-//        $this->arguments->getArgument('news')->getPropertyMappingConfiguration()->setTypeConverter(\Mediadreams\MdNewsfrontend\Property\TypeConverters\MyPersistentObjectConverter::class);
     }
 
     /**
@@ -186,6 +164,10 @@ class NewsController extends BaseController
      */
     public function initializeUpdateAction()
     {
+        $this->arguments->getArgument('news')
+            ->getPropertyMappingConfiguration()
+            ->setTypeConverter($this->objectManager->get(MyPersistentObjectConverter::class));
+
         $this->initializeCreateUpdate(
             $this->request->getArguments(),
             $this->arguments['news']
