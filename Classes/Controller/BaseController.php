@@ -169,7 +169,7 @@ class BaseController extends \TYPO3\CMS\Extbase\Mvc\Controller\ActionController
                 ->setTypeConverterOption(
                     'TYPO3\\CMS\\Extbase\\Property\\TypeConverter\\DateTimeConverter',
                     DateTimeConverter::CONFIGURATION_DATE_FORMAT,
-                    $this->settings['formatDatetime']
+                    $this->settings['formatArchive']
                 );
         }
 
