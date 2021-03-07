@@ -65,6 +65,10 @@ class NewsController extends BaseController
      */
     public function initializeCreateAction()
     {
+        $this->arguments->getArgument('news')
+            ->getPropertyMappingConfiguration()
+            ->setTypeConverter($this->objectManager->get(MyPersistentObjectConverter::class));
+
         $this->initializeCreateUpdate(
             $this->request->getArguments(),
             $this->arguments['newNews']
