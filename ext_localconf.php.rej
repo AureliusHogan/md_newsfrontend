@@ -1,0 +1,22 @@
+--- ext_localconf.php	(date 1611937109437)
++++ ext_localconf.php	(date 1611937109437)
+@@ -10,7 +10,7 @@
+          */
+         $GLOBALS['TYPO3_CONF_VARS']['EXT']['news']['classes']['Domain/Model/News'][] = 'md_newsfrontend';
+ 
+-        
++
+         \TYPO3\CMS\Extbase\Utility\ExtensionUtility::configurePlugin(
+             'Mediadreams.MdNewsfrontend',
+             'Newsfe',
+@@ -22,6 +22,9 @@
+                 'News' => 'list, create, update, delete'
+             ]
+         );
+-        
++
++//        \TYPO3\CMS\Extbase\Utility\ExtensionUtility::registerTypeConverter('Mediadreams\\Mdnewsfrontend\\Property\\TypeConverters\\MyPersistentObjectConverter');
++
++
+     }
+ );

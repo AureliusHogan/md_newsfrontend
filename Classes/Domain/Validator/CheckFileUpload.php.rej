@@ -1,0 +1,11 @@
+--- Classes/Domain/Validator/CheckFileUpload.php	(date 1612096487323)
++++ Classes/Domain/Validator/CheckFileUpload.php	(date 1612096487323)
+@@ -60,7 +60,7 @@
+      */
+     private function checkDenyPattern($uploadFile)
+     {
+-        if (!GeneralUtility::verifyFilenameAgainstDenyPattern($uploadFile['name'])) {
++        if (!GeneralUtility::makeInstance(FileNameValidator::class)->isValid($uploadFile['name'])) {
+             $this->addError(LocalizationUtility::translate('validator.file_type','md_newsfrontend'), 1540902993);
+         }
+ 
