@@ -14,9 +14,12 @@ namespace Mediadreams\MdNewsfrontend\Controller;
 
 use Mediadreams\MdNewsfrontend\Property\TypeConverters\MyPersistenObjectConverter;
 use TYPO3\CMS\Core\Cache\CacheManager;
+use TYPO3\CMS\Core\Configuration\ExtensionConfiguration;
 use TYPO3\CMS\Core\Database\ConnectionPool;
+use TYPO3\CMS\Core\Mail\MailMessage;
 use TYPO3\CMS\Core\TypoScript\TypoScriptService;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
+use TYPO3\CMS\Backend\Utility\BackendUtility;
 
 use TYPO3\CMS\Extbase\Domain\Repository\CategoryRepository;
 use TYPO3\CMS\Extbase\Property\TypeConverter\DateTimeConverter;
@@ -26,11 +29,17 @@ use TYPO3\CMS\Core\Messaging\AbstractMessage;
 
 use Mediadreams\MdNewsfrontend\Utility\FileUpload;
 
+use Psr\Log\LoggerAwareTrait;
+use TYPO3\CMS\Fluid\View\StandaloneView;
+
 /**
  * Base controllerUnreadnewsController
  */
-class BaseController extends \TYPO3\CMS\Extbase\Mvc\Controller\ActionController
+class BaseController extends \TYPO3\CMS\Extbase\Mvc\Controller\ActionController implements \Psr\Log\LoggerAwareInterface
 {
+
+    use LoggerAwareTrait;
+
     /**
      * @var array
      */
@@ -51,6 +60,11 @@ class BaseController extends \TYPO3\CMS\Extbase\Mvc\Controller\ActionController
      * @TYPO3\CMS\Extbase\Annotation\Inject
      */
     protected $userRepository = null;
+
+    /**
+     * @var
+     */
+    protected $backendConfiguration;
 
     /**
      * Deactivate errorFlashMessage
@@ -125,6 +139,8 @@ class BaseController extends \TYPO3\CMS\Extbase\Mvc\Controller\ActionController
             $this->feuserUid = $GLOBALS['TSFE']->fe_user->user['uid'];
             $this->feuserObj = $this->userRepository->findByUid($this->feuserUid);
         }
+
+        $this->backendConfiguration = GeneralUtility::makeInstance(ExtensionConfiguration::class);
 
         parent::initializeAction();
     }
@@ -344,4 +360,55 @@ class BaseController extends \TYPO3\CMS\Extbase\Mvc\Controller\ActionController
             $cacheManager->flushCachesInGroupByTag('pages', $cacheTag);
         }
     }
+
+    /**
+     * get domain
+     * @return string
+     */
+    public function getDomain()
+    {
+        return (empty(GeneralUtility::getIndpEnv('HTTPS')) ? 'http' : 'https') . '://' .
+            GeneralUtility::getIndpEnv('HTTP_HOST');
+    }
+
+    /**
+     * @param array $recipient recipient of the email in the format array('recipient@domain.tld' => 'Recipient Name')
+     * @param array $sender sender of the email in the format array('sender@domain.tld' => 'Sender Name')
+     * @param string $subject subject of the email
+     * @param string $templateName template name (UpperCamelCase)
+     * @param array $variables variables to be passed to the Fluid view
+     * @return boolean TRUE on success, otherwise false
+     */
+    public function sendTemplateEmail(array $recipient, array $sender, $subject, $templateName, array $variables = array()) {
+        $emailView = GeneralUtility::makeInstance( StandaloneView::class);
+        $emailView->setFormat('html');
+        $emailView->setTemplateRootPaths([GeneralUtility::getFileAbsFileName('EXT:sitepackage/Resources/Private/Templates/')]);
+        $emailView->setLayoutRootPaths([GeneralUtility::getFileAbsFileName('EXT:sitepackage/Resources/Private/Layouts/')]);
+        $emailView->setPartialRootPaths([GeneralUtility::getFileAbsFileName('EXT:sitepackage/Resources/Private/Partials/')]);
+        $templatePathAndFilename = $templateName . '.html';
+        $emailView->setTemplate($templatePathAndFilename);
+        $emailView->assignMultiple($variables);
+        $emailBody = $emailView->render();
+
+        $message = GeneralUtility::makeInstance( MailMessage::class);
+        $message->setTo($recipient)
+            ->setFrom($sender)
+            ->setSubject($subject);
+
+        // Possible attachments here
+        //foreach ($attachments as $attachment) {
+        //	$message->attach($attachment);
+        //}
+
+        // Plain text example
+//        $message->setBody($emailBody, 'text/plain');
+
+        // HTML Email
+        #$message->setBody($emailBody, 'text/html');
+        $message->html($emailBody);
+
+        $message->send();
+        return $message->isSent();
+    }
+
 }

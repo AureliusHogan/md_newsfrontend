@@ -13,6 +13,8 @@ namespace Mediadreams\MdNewsfrontend\Controller;
  */
 
 use Mediadreams\MdNewsfrontend\Property\TypeConverters\MyPersistentObjectConverter;
+use Symfony\Component\Mime\Address;
+use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Messaging\AbstractMessage;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
@@ -36,6 +38,8 @@ class NewsController extends BaseController
         $news = $this->newsRepository->findByFeuserId($this->feuserUid, $this->settings['allowNotEnabledNews']);
 //        $news = $this->newsRepository->findByTxMdNewsfrontendFeuser($this->feuserUid);
         $this->view->assign('news', $news);
+        $this->logger->info('ekm: listed message');
+
     }
 
     /**
@@ -120,6 +124,8 @@ class NewsController extends BaseController
             '',
             AbstractMessage::OK
         );
+        $this->logger->info('ekm: created message ' . $newNews->getTitle());
+        $this->informUsers($newNews, 'C');
 
         $this->redirect('list');
     }
@@ -216,6 +222,8 @@ class NewsController extends BaseController
             AbstractMessage::OK
         );
 
+        $this->informUsers($news, 'U');
+
         $this->redirect('list');
     }
 
@@ -248,4 +256,93 @@ class NewsController extends BaseController
 
         $this->redirect('list');
     }
+
+    /**
+     * get a list of emails ideas receivers
+     *
+     */
+    public function getReceiverEmailAddress(){
+
+        $tableName = 'fe_users';
+        $groupId = $this->backendConfiguration->get('sitepackage', 'IdeasGID');
+
+        $queryBuilder = GeneralUtility::makeInstance(ConnectionPool::class)->getQueryBuilderForTable($tableName);
+
+        /**
+         * select the fields that will be returned, use asterisk for all
+         */
+        $queryBuilder->select('first_name', 'last_name', 'email');
+        $queryBuilder->from($tableName);
+        $queryBuilder->where(
+            $queryBuilder->expr()->inSet('usergroup', $queryBuilder->createNamedParameter($groupId, \PDO::PARAM_INT))
+        );
+
+        $this->logger->info('SQL = ' . $queryBuilder->getSQL(), $queryBuilder->getParameters());
+        return $queryBuilder->execute()->fetchAll();
+    }
+
+    /**
+     * inform Markets
+     *
+     * @param \Mediadreams\MdNewsfrontend\Domain\Model\News $news The news object
+     * @param string $action The action happened (creted/updated)
+     */
+    public function informUsers( \Mediadreams\MdNewsfrontend\Domain\Model\News $news, string $action) {
+
+        if( $news->getHidden()){
+            return;
+        }
+        $creater = new Address(
+            $this->feuserObj->getEmail(),
+            $this->feuserObj->getFirstName() . ' ' . $this->feuserObj->getLastName()
+        );
+
+        $globalReceivers = new Address(
+            'ideas@b2hv.com',
+            'b2 Ideas Pool'
+        );
+
+        $recipientList = $this->getReceiverEmailAddress();
+        $recipients = [];
+        foreach ($recipientList as $recipient ){
+            $recipients[] = new Address(
+                $recipient['email'],
+                $recipient['first_name'] . ' ' . $recipient['last_name']
+            );
+        }
+
+        // create the email to creater
+        $this->sendTemplateEmail(
+            [$creater],
+            [$globalReceivers],
+            'Intranet Ideas ' . $news->getTitle(),
+            'EmailIdeasCreater',
+            array(
+                'data' => $news,
+                'actionDone' => $action,
+                'domain' => $this->getDomain(),
+                'user' => $this->feuserObj,
+                'recipients' => $recipients
+            )
+        );
+        $this->logger->info('Ideas Reciept: ' . $this->feuserObj->getEmail());
+
+        $this->sendTemplateEmail(
+            $recipients,
+            [$creater],
+            'Intranet Ideas' . $news->getTitle(),
+            'EmailIdeas',
+            array(
+                'data' => $news,
+                'actionDone' => $action,
+                'domain' => $this->getDomain(),
+                'user' => $this->feuserObj,
+                'recipients' => $recipients
+            )
+        );
+        $this->logger->info('Ideas Informed: ' . json_encode($recipientList));
+    }
+
+
+
 }
